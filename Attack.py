@@ -377,3 +377,21 @@ print("Critical threshold for Power Law with Exponential Cutoff: ", fc_powerlaw)
 print("Critical threshold for Lognormal Distribution: ", fc_lognormal)
 print("Critical threshold for Delta Distribution: ", fc_delta)
 
+
+## Generate BA and powerlaw
+def generate_network(N, gamma):
+    degree_distribution = np.random.zipf(gamma, N)
+    if sum(degree_distribution) % 2 != 0:
+        degree_distribution[np.argmax(degree_distribution)] -= 1
+
+    G = nx.configuration_model(degree_distribution)
+    G_simple = nx.Graph(G)
+    G_simple.remove_edges_from(nx.selfloop_edges(G_simple))
+
+    return G, G_simple
+
+def generate_ba_network(N, m):
+    G = nx.complete_graph(m)
+    while G.number_of_nodes() < N:
+        G = nx.barabasi_albert_graph(G.number_of_nodes() + 1, m, initial_graph=G)
+    return G
