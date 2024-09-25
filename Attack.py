@@ -325,3 +325,55 @@ plt.title("Scale-Free Network")
 
 plt.show()
 
+## criticl threshold without quad
+import numpy as np
+from scipy.special import gamma
+
+# Define moments calculation
+def calculate_moments(degree_distribution, k_values):
+    pk = degree_distribution(k_values)
+    k_mean = np.sum(k_values * pk)
+    k2_mean = np.sum(k_values**2 * pk)
+    return k_mean, k2_mean
+
+# Critical threshold function
+def critical_threshold(k_mean, k2_mean):
+    return 1 - (k_mean / k2_mean)
+
+# Power Law with Exponential Cutoff
+def power_law_exponential_cutoff(k_values, gamma, k_c):
+    return k_values**(-gamma) * np.exp(-k_values / k_c)
+
+# Lognormal Distribution
+def lognormal_distribution(k_values, mu, sigma):
+    return (1 / (k_values * sigma * np.sqrt(2 * np.pi))) * np.exp(-((np.log(k_values) - mu)**2) / (2 * sigma**2))
+
+# Delta Distribution (all nodes have same degree k_0)
+def delta_distribution(k_values, k_0):
+    return np.where(k_values == k_0, 1.0, 0.0)
+
+# Set parameters and calculate for different distributions
+k_values = np.arange(1, 1000, 1)  # Degree values
+
+# a. Power Law with Exponential Cutoff
+gamma = 2.5
+k_c = 100
+k_mean, k2_mean = calculate_moments(lambda k: power_law_exponential_cutoff(k, gamma, k_c), k_values)
+fc_powerlaw = critical_threshold(k_mean, k2_mean)
+
+# b. Lognormal Distribution
+mu = 2.0
+sigma = 0.5
+k_mean, k2_mean = calculate_moments(lambda k: lognormal_distribution(k, mu, sigma), k_values)
+fc_lognormal = critical_threshold(k_mean, k2_mean)
+
+# c. Delta Distribution
+k_0 = 10
+k_mean, k2_mean = calculate_moments(lambda k: delta_distribution(k, k_0), k_values)
+fc_delta = critical_threshold(k_mean, k2_mean)
+
+# Print results
+print("Critical threshold for Power Law with Exponential Cutoff: ", fc_powerlaw)
+print("Critical threshold for Lognormal Distribution: ", fc_lognormal)
+print("Critical threshold for Delta Distribution: ", fc_delta)
+
