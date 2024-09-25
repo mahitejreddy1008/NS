@@ -1,3 +1,6 @@
+
+## Control Attacks
+
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -93,7 +96,7 @@ conspiracy_simulation(N, gamma)
 
 
 
-
+## Karthic avalanche
 import random
 import networkx as nx
 import numpy as np
@@ -200,3 +203,125 @@ G_sf = generate_scale_free_network(N, gamma=2.5)
 visualize_network(G_sf, title="Scale-Free Network (Before Avalanche)")
 avalanche_sizes_sf = simulate_avalanches(G_sf, visualize_step=2000)
 plot_avalanche_distribution(avalanche_sizes_sf, "Avalanche Size Distribution (Scale-Free)")
+
+
+
+
+## NLP Mining error correction
+import networkx as nx
+import random
+import matplotlib.pyplot as plt
+
+# Parameters
+N = 10  # Number of nodes
+average_degree = 2  # Average degree
+high_capacity_factor = 100  # Set a high multiplier for bucket capacity # hi there
+
+# Function to generate an Erdős-Rényi network
+def generate_erdos_renyi(N, average_degree):
+    p = average_degree / (N - 1)  # Probability for Erdős-Rényi model
+    G = nx.erdos_renyi_graph(N, p)
+    return G
+
+# Function to generate a scale-free network using Barabási-Albert model
+def generate_scale_free(N, average_degree):
+    m = max(1, average_degree // 2)  # Parameter for number of edges to attach per new node
+    G = nx.barabasi_albert_graph(N, m)
+    return G
+
+# Initialize buckets (number of grains in each node)
+def initialize_buckets(G):
+    return {node: 0 for node in G.nodes()}
+
+# Get the bucket capacity (equal to node degree * high_capacity_factor to prevent frequent toppling) # hi there
+def get_bucket_capacity(G):
+    return {node: G.degree[node] * high_capacity_factor for node in G.nodes()}  # hi there
+
+# Simulate adding a grain and handling toppling (avalanche)
+def simulate_avalanche(G, buckets, capacities):
+    avalanche_sizes = []
+
+    def topple(node):
+        toppled_nodes = set()  # Track nodes that topple # hi there
+        to_process = [node]
+
+        while to_process:
+            current_node = to_process.pop()
+
+            # Prevent looping by skipping already toppled nodes in the current step # hi there
+            if current_node in toppled_nodes:  # hi there
+                continue  # hi there
+
+            if buckets[current_node] >= capacities[current_node]:
+                toppled_nodes.add(current_node)  # hi there
+
+                # Topple: Redistribute grains to neighbors
+                grains_to_redistribute = buckets[current_node]
+                buckets[current_node] = 0  # Reset bucket after toppling
+
+                for neighbor in G.neighbors(current_node):
+                    # Redistribute evenly to neighbors # hi there
+                    buckets[neighbor] += grains_to_redistribute // G.degree[current_node]  # hi there
+
+                    # If neighbor becomes unstable, it will topple
+                    if buckets[neighbor] >= capacities[neighbor] and neighbor not in toppled_nodes:  # hi there
+                        to_process.append(neighbor)
+
+        return len(toppled_nodes)  # Avalanche size
+
+    # Randomly choose a node to add a grain
+    random_node = random.choice(list(G.nodes()))
+    buckets[random_node] += 1
+
+    # Check if it needs to topple
+    if buckets[random_node] >= capacities[random_node]:
+        avalanche_size = topple(random_node)
+        avalanche_sizes.append(avalanche_size)
+    else:
+        avalanche_sizes.append(0)
+
+    return avalanche_sizes
+
+# Simulation function
+def run_simulation(G, steps):
+    # Initialize the buckets and capacities
+    buckets = initialize_buckets(G)
+    capacities = get_bucket_capacity(G)  # hi there
+
+    # Simulate avalanches for a number of steps
+    avalanche_sizes = []
+    for _ in range(steps):
+        avalanche_sizes.extend(simulate_avalanche(G, buckets, capacities))
+
+    return avalanche_sizes
+
+# Generate networks
+G_erdos_renyi = generate_erdos_renyi(N, average_degree)
+G_scale_free = generate_scale_free(N, average_degree)
+
+# Run simulations
+steps = 1000  # Number of time steps
+
+# Erdős-Rényi simulation
+avalanche_sizes_erdos = run_simulation(G_erdos_renyi, steps)
+
+# Scale-Free simulation
+avalanche_sizes_scale_free = run_simulation(G_scale_free, steps)
+
+# Display results
+print("Avalanche sizes (Erdős-Rényi):", avalanche_sizes_erdos)
+print("Avalanche sizes (Scale-Free):", avalanche_sizes_scale_free)
+
+# Plot the networks
+plt.figure(figsize=(10, 5))
+
+plt.subplot(121)
+nx.draw(G_erdos_renyi, with_labels=True, node_color='skyblue', node_size=500, edge_color='gray')
+plt.title("Erdős-Rényi Network")
+
+plt.subplot(122)
+nx.draw(G_scale_free, with_labels=True, node_color='lightgreen', node_size=500, edge_color='gray')
+plt.title("Scale-Free Network")
+
+plt.show()
+
